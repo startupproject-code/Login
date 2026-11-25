@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #eef2f7;
+        color: #172033;
+      }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #eef2f7;
+      }
+      .panel {
+        width: min(100%, 390px);
+        padding: 32px;
+        border: 1px solid #e1e6ef;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgb(23 32 51 / 9%);
+      }
+      h1 { margin: 0 0 8px; font-size: 1.6rem; }
+      .subtitle { margin: 0 0 24px; color: #667085; }
+      label { display: block; margin: 16px 0 7px; font-weight: 600; }
+      input {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        border: 1px solid #cbd3df;
+        border-radius: 7px;
+        font: inherit;
+      }
+      input:focus { outline: 3px solid rgb(67 97 238 / 18%); border-color: #4361ee; }
+      button {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 22px;
+        border: 0;
+        border-radius: 7px;
+        background: #3156d3;
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:hover { background: #2648ba; }
+      button:disabled { cursor: wait; opacity: .7; }
+      .message { min-height: 1.5em; margin: 12px 0 0; color: #b42318; }
+      .hello { text-align: center; }
+      .hello h1 { font-size: 2rem; }
+      .hello button { background: #596579; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="panel" id="login-panel" aria-labelledby="login-title">
+        <h1 id="login-title">เข้าสู่ระบบ</h1>
+        <p class="subtitle">กรุณากรอก User และ Password</p>
+        <form id="login-form">
+          <label for="username">User</label>
+          <input id="username" name="username" autocomplete="username" required>
+
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+          <button id="submit-button" type="submit">Log in</button>
+          <p class="message" id="message" role="alert" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="panel hello" id="hello-panel" aria-live="polite" hidden>
+        <h1>Hello World</h1>
+        <button id="back-to-login" type="button">กลับไปหน้า Login</button>
+      </section>
+    </main>
+
+    <script>
+      let authenticated = false;
+      const form = document.getElementById('login-form');
+      const button = document.getElementById('submit-button');
+      const message = document.getElementById('message');
+      const loginPanel = document.getElementById('login-panel');
+      const helloPanel = document.getElementById('hello-panel');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        message.textContent = '';
+        button.disabled = true;
+        button.textContent = 'กำลังตรวจสอบ…';
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        google.script.run
+          .withSuccessHandler((isValid) => {
+            button.disabled = false;
+            button.textContent = 'Log in';
+            if (isValid) {
+              authenticated = true;
+              form.reset();
+              loginPanel.hidden = true;
+              helloPanel.hidden = false;
+              document.getElementById('back-to-login').focus();
+            } else {
+              message.textContent = 'User หรือ Password ไม่ถูกต้อง';
+              document.getElementById('password').focus();
+            }
+          })
+          .withFailureHandler(() => {
+            button.disabled = false;
+            button.textContent = 'Log in';
+            message.textContent = 'ไม่สามารถตรวจสอบบัญชีได้ กรุณาลองอีกครั้ง';
+          })
+          .validateLogin(username, password);
+      });
+
+      document.getElementById('back-to-login').addEventListener('click', () => {
+        // Clear the in-memory login state and credential fields before returning.
+        authenticated = false;
+        form.reset();
+        message.textContent = '';
+        helloPanel.hidden = true;
+        loginPanel.hidden = false;
+        document.getElementById('username').focus();
+      });
+    </script>
+  </body>
+</html>
